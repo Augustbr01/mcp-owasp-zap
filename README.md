@@ -14,7 +14,7 @@ apontar `ZAP_BASE_URL` e `ZAP_API_KEY`.
 ## Instalação
 
 ```bash
-git clone https://github.com/SEU_USUARIO/mcp-zap.git
+git clone https://github.com/Augustbr01/mcp-zap.git
 cd mcp-zap
 uv sync
 cp .env.example .env   # ajuste ZAP_BASE_URL e ZAP_API_KEY
