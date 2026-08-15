@@ -1,0 +1,20 @@
+[project]
+name = "mcp-zap"
+version = "0.1.0"
+description = "Servidor MCP para conectar o Claude (ou qualquer cliente MCP) a uma instância do OWASP ZAP"
+readme = "README.md"
+authors = [
+    { name = "Augusto Correa", email = "augustogatticorrea777@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "httpx>=0.28.1",
+    "mcp[cli]>=1.2",
+]
+
+[project.scripts]
+mcp-zap = "mcp_zap:main"
+
+[build-system]
+requires = ["uv_build>=0.11.32,<0.12.0"]
+build-backend = "uv_build"

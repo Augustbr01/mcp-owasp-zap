@@ -1,0 +1,22 @@
+# Ambiente Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Configuração local do Claude Code (CONTÉM A API KEY — nunca commitar)
+.claude/
+
+# Segredos / ambiente
+.env
+.env.local
+
+# Dados gerados em runtime (scans, análises, banco do alvo de treino)
+webui/data/
+*.db
+.ZAP/
+
+# Alvos de treino vulneráveis (uso local, não publicar)
+alvo_treino/

@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZAP Scanner Local</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#fff; --ink:#1a1d23; --muted:#6b7280; --line:#e5e7eb;
+    --accent:#3b5bdb; --accent-ink:#fff;
+    --high:#e03131; --medium:#f08c00; --low:#f2c200; --info:#868e96;
+    --high-bg:#fff0f0; --medium-bg:#fff6e9; --low-bg:#fffbe6; --info-bg:#f1f3f5;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0f1115; --card:#1a1d23; --ink:#e8eaed; --muted:#9aa0aa; --line:#2a2e37;
+      --accent:#5c7cfa; --accent-ink:#fff;
+      --high-bg:#2a1515; --medium-bg:#2a2011; --low-bg:#2a2810; --info-bg:#1e2127;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  .wrap{max-width:920px;margin:0 auto;padding:28px 20px 60px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px;flex-wrap:wrap}
+  h1{font-size:22px;margin:0;display:flex;align-items:center;gap:9px}
+  .health{font-size:13px;color:var(--muted)}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--info);margin-right:5px}
+  .dot.ok{background:#2f9e44}.dot.bad{background:var(--high)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;margin-bottom:18px}
+  .row{display:flex;gap:10px}
+  input[type=url]{flex:1;padding:12px 14px;font-size:15px;border:1px solid var(--line);
+    border-radius:10px;background:var(--bg);color:var(--ink)}
+  button{cursor:pointer;border:0;border-radius:10px;padding:12px 20px;font-size:15px;font-weight:600}
+  .primary{background:var(--accent);color:var(--accent-ink)}
+  .primary:disabled{opacity:.5;cursor:not-allowed}
+  .ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+  .warn{font-size:12.5px;color:var(--muted);margin-top:10px}
+  .phase{font-size:13.5px;color:var(--muted);margin-bottom:8px}
+  .bar{height:9px;background:var(--line);border-radius:6px;overflow:hidden;margin:5px 0 12px}
+  .bar>i{display:block;height:100%;background:var(--accent);width:0;transition:width .4s}
+  .barlabel{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted)}
+  .cards-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:6px}
+  .sum{border-radius:12px;padding:12px;text-align:center;border:1px solid var(--line)}
+  .sum b{display:block;font-size:26px;line-height:1.1}
+  .sum span{font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+  .sum .subt{display:block;font-size:10.5px;font-style:normal;color:var(--muted);min-height:13px;margin-top:2px}
+  .sum.high{background:var(--high-bg)} .sum.high b{color:var(--high)}
+  .sum.medium{background:var(--medium-bg)} .sum.medium b{color:var(--medium)}
+  .sum.low{background:var(--low-bg)} .sum.low b{color:#b59a00}
+  .sum.info{background:var(--info-bg)} .sum.info b{color:var(--info)}
+  .finding{border:1px solid var(--line);border-left-width:4px;border-radius:10px;margin-bottom:10px;overflow:hidden}
+  .finding.high{border-left-color:var(--high)}
+  .finding.medium{border-left-color:var(--medium)}
+  .finding.low{border-left-color:var(--low)}
+  .finding.informational{border-left-color:var(--info)}
+  .fhead{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer}
+  .badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;white-space:nowrap;text-transform:uppercase}
+  .badge.high{background:var(--high);color:#fff}
+  .badge.medium{background:var(--medium);color:#fff}
+  .badge.low{background:var(--low);color:#3a3300}
+  .badge.informational{background:var(--info);color:#fff}
+  .fname{font-weight:600;flex:1}
+  .fmeta{font-size:12.5px;color:var(--muted);white-space:nowrap}
+  .fbody{padding:0 14px 14px;font-size:13.5px;display:none}
+  .finding.open .fbody{display:block}
+  .fbody h4{margin:12px 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+  .fbody p{margin:0}
+  code,pre{background:var(--info-bg);border-radius:6px;font-size:12.5px}
+  code{padding:2px 6px} pre{padding:10px;overflow:auto;white-space:pre-wrap;word-break:break-all;margin:4px 0}
+  .empty{color:var(--muted);text-align:center;padding:30px 0}
+  .err{color:var(--high);font-size:13.5px}
+  .actions{display:flex;gap:10px;margin-top:6px;flex-wrap:wrap}
+  a.report{color:var(--accent);font-size:13.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🛡️ ZAP Scanner <span style="font-weight:400;color:var(--muted)">local</span></h1>
+    <div class="health" id="health"><span class="dot"></span>verificando ZAP…</div>
+  </header>
+
+  <div class="card">
+    <div class="row">
+      <input type="url" id="url" placeholder="http://127.0.0.1:3000" autocomplete="off">
+      <button class="primary" id="go">Analisar</button>
+    </div>
+    <div class="warn">⚠️ Só escaneie alvos que você tem autorização para testar. O scan é intrusivo.</div>
+  </div>
+
+  <div class="card" id="progress" style="display:none">
+    <div class="phase" id="phase"></div>
+    <div class="barlabel"><span>Spider (mapeamento)</span><span id="spct">0%</span></div>
+    <div class="bar"><i id="sbar"></i></div>
+    <div class="barlabel"><span>Scan ativo (ataques)</span><span id="apct">0%</span></div>
+    <div class="bar"><i id="abar"></i></div>
+    <div class="actions">
+      <button class="ghost" id="stop">Parar scan</button>
+    </div>
+  </div>
+
+  <div class="card" id="results" style="display:none">
+    <div class="cards-sum">
+      <div class="sum high"><b id="c-high">0</b><span>Graves</span><em class="subt" id="s-high"></em></div>
+      <div class="sum medium"><b id="c-medium">0</b><span>Médias</span><em class="subt" id="s-medium"></em></div>
+      <div class="sum low"><b id="c-low">0</b><span>Baixas</span><em class="subt" id="s-low"></em></div>
+      <div class="sum info"><b id="c-info">0</b><span>Info</span><em class="subt" id="s-info"></em></div>
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin:0 0 12px">Números = <b>tipos</b> de falha (o subtítulo mostra em quantos pontos aparecem).</p>
+    <div class="actions" style="margin-bottom:14px">
+      <a class="report" href="/api/report" target="_blank">📄 Abrir relatório completo do ZAP</a>
+    </div>
+    <div id="findings"></div>
+  </div>
+
+  <div class="card" id="ai" style="display:none">
+    <h1 style="font-size:17px;margin:0 0 10px">🧠 Análise inteligente (Claude Code)</h1>
+    <div id="ai-body"></div>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => (s||"").replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+async function health(){
+  try{
+    const h = await (await fetch('/api/health')).json();
+    if(h.connected) $('#health').innerHTML = `<span class="dot ok"></span>ZAP ${esc(h.version)} conectado`;
+    else $('#health').innerHTML = `<span class="dot bad"></span>ZAP offline`;
+  }catch{ $('#health').innerHTML = `<span class="dot bad"></span>backend offline`; }
+}
+
+async function start(){
+  const url = $('#url').value.trim();
+  if(!url) return;
+  $('#go').disabled = true;
+  $('#results').style.display='none';
+  const r = await fetch('/api/scan',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({url})});
+  const d = await r.json();
+  if(d.error){ alert(d.error); $('#go').disabled=false; return; }
+  $('#progress').style.display='block';
+  poll();
+}
+
+let timer=null;
+async function poll(){
+  const s = await (await fetch('/api/status')).json();
+  $('#phase').textContent = 'Fase: ' + s.phase + (s.error? '' : '');
+  $('#sbar').style.width = s.spider+'%'; $('#spct').textContent = s.spider+'%';
+  $('#abar').style.width = s.ascan+'%'; $('#apct').textContent = s.ascan+'%';
+  if(s.error){ $('#phase').innerHTML = '<span class="err">Erro: '+esc(s.error)+'</span>'; }
+  if(s.completed){ render(s); loadAI(); $('#go').disabled=false; clearTimeout(timer); return; }
+  if(!s.running && !s.completed){ $('#go').disabled=false; }
+  if(s.running){ timer = setTimeout(poll, 1500); }
+}
+
+function render(s){
+  // Conta TIPOS de falha por risco (não ocorrências) — mais claro pra priorizar.
+  const types = {High:0, Medium:0, Low:0, Informational:0};
+  const occ = {High:0, Medium:0, Low:0, Informational:0};
+  for(const f of (s.findings||[])){
+    if(types[f.risk]!==undefined){ types[f.risk]++; occ[f.risk]+=(f.urls?f.urls.length:1); }
+  }
+  const cell = (n,risk) => {
+    $('#c-'+n).textContent = types[risk];
+    $('#s-'+n).textContent = occ[risk]>types[risk] ? 'em '+occ[risk]+' pontos' : '';
+  };
+  cell('high','High'); cell('medium','Medium');
+  cell('low','Low'); cell('info','Informational');
+  const box = $('#findings'); box.innerHTML='';
+  if(!s.findings.length){ box.innerHTML='<div class="empty">Nenhum alerta encontrado.</div>'; }
+  const nice = {High:'Grave',Medium:'Média',Low:'Baixa',Informational:'Info'};
+  for(const f of s.findings){
+    const cls = (f.risk||'').toLowerCase();
+    const el = document.createElement('div');
+    el.className = 'finding '+cls;
+    const params = f.params&&f.params.length ? ' · param: '+esc(f.params.join(', ')) : '';
+    let detail = '';
+    if(f.description) detail += `<h4>O que é</h4><p>${esc(f.description).slice(0,600)}</p>`;
+    if(f.attack) detail += `<h4>Ataque usado (prova)</h4><pre>${esc(f.attack)}</pre>`;
+    if(f.evidence) detail += `<h4>Evidência na resposta</h4><pre>${esc(f.evidence)}</pre>`;
+    if(f.solution) detail += `<h4>Como corrigir</h4><p>${esc(f.solution).slice(0,600)}</p>`;
+    detail += `<h4>URLs afetadas (${f.urls.length})</h4><pre>${esc(f.urls.join('\n'))}</pre>`;
+    el.innerHTML =
+      `<div class="fhead">
+         <span class="badge ${cls}">${nice[f.risk]||esc(f.risk)}</span>
+         <span class="fname">${esc(f.name)}</span>
+         <span class="fmeta">CWE-${esc(String(f.cweid))} · ${f.urls.length} url(s)${params}</span>
+       </div>
+       <div class="fbody">${detail}</div>`;
+    el.querySelector('.fhead').onclick = () => el.classList.toggle('open');
+    box.appendChild(el);
+  }
+  $('#results').style.display='block';
+}
+
+// Renderização simples de markdown (títulos, negrito, listas)
+function md(t){
+  return esc(t)
+    .replace(/^### (.*)$/gm,'<h4>$1</h4>')
+    .replace(/^## (.*)$/gm,'<h3 style="margin:14px 0 6px">$1</h3>')
+    .replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')
+    .replace(/^- (.*)$/gm,'• $1')
+    .replace(/\n/g,'<br>');
+}
+async function loadAI(){
+  const box = $('#ai'), body = $('#ai-body');
+  try{
+    const d = await (await fetch('/api/ai')).json();
+    box.style.display='block';
+    if(d.present === false){
+      body.innerHTML = '<p style="color:var(--muted);font-size:13.5px">'+
+        'Ainda sem análise da IA para este scan.<br>No <b>Claude Code</b>, peça: '+
+        '<code>analise o último scan</code> — eu leio o resultado, raciocino sobre a '+
+        'intenção (lógica de negócio, IDOR, bypass…) e a análise aparece aqui.</p>';
+    }else{
+      body.innerHTML = '<div style="font-size:14px">'+md(d.markdown||'')+'</div>'+
+        (d.generated_at? '<p style="color:var(--muted);font-size:12px;margin-top:12px">gerado por Claude Code · '+esc(d.generated_at)+'</p>':'');
+    }
+  }catch{ box.style.display='none'; }
+}
+$('#go').onclick = start;
+$('#url').addEventListener('keydown', e => { if(e.key==='Enter') start(); });
+$('#stop').onclick = async () => { await fetch('/api/stop',{method:'POST'}); };
+health();
+// Se já houver um scan rodando (recarregou a página), retoma o polling
+fetch('/api/status').then(r=>r.json()).then(s=>{
+  if(s.running){ $('#progress').style.display='block'; poll(); }
+  else if(s.completed && s.findings.length){ render(s); loadAI(); }
+});
+</script>
+</body>
+</html>
